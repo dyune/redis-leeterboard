@@ -5,5 +5,8 @@ type userRequest struct {
 }
 
 type user struct {
-	// TODO: Implement the user type
+	Id    string `json:"id"`
+	Name  string `json:"name"`
+	Rank  int    `json:"rank"`
+	Score int    `json:"score"`
 }
