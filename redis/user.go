@@ -1,10 +1,10 @@
-package main
+package redis
 
-type userRequest struct {
+type UserRequest struct {
 	Name string `json:"name"`
 }
 
-type user struct {
+type User struct {
 	Id    string `json:"id"`
 	Name  string `json:"name"`
 	Rank  int    `json:"rank"`

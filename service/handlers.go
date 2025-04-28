@@ -1,12 +1,13 @@
-package main
+package service
 
 import (
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"redis-leetcode-leaderboard/redis"
 )
 
-// GET
-func about(context *gin.Context) {
+// About GET method
+func About(context *gin.Context) {
 	// Sends back JSON
 	context.IndentedJSON(
 		http.StatusOK,
@@ -16,9 +17,9 @@ func about(context *gin.Context) {
 		})
 }
 
-// POST
-func register(context *gin.Context) {
-	var newUser userRequest
+// Register POST method
+func Register(context *gin.Context) {
+	var newUser redis.UserRequest
 
 	// BindJSON binds the incoming request JSON to the defined type
 	if err := context.BindJSON(&newUser); err != nil {
@@ -28,7 +29,7 @@ func register(context *gin.Context) {
 		)
 	}
 
-	user, err := addUser(newUser.Name, 0)
+	user, err := redis.AddUser(newUser.Name, 0)
 	if err != nil {
 		context.IndentedJSON(
 			http.StatusInternalServerError,

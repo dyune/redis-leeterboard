@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"log"
+	"redis-leetcode-leaderboard/api"
 )
 
 func main() {
@@ -15,8 +16,8 @@ func main() {
 	// Uncomment for release: gin.SetMode(gin.ReleaseMode)
 
 	// Init endpoints and run
-	api := router.Group("/api/v1")
-	setupRoutes(api)
+	apiRoutes := router.Group("/api/v1")
+	api.SetupRoutes(apiRoutes)
 	err := router.Run(":8080")
 
 	if err != nil {
