@@ -12,4 +12,8 @@ func SetupRoutes(router *gin.RouterGroup) {
 
 	// POST: Register a user
 	router.POST("/users", service.Register)
+
+	// GET: Get information on a user
+	router.GET("/users/:id", service.GetUserData)
+
 }

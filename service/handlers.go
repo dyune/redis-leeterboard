@@ -29,7 +29,7 @@ func Register(context *gin.Context) {
 		)
 	}
 
-	user, err := redis.AddUser(newUser.Name, 0)
+	user, err := redis.AddUser(newUser.Name, 0.00)
 	if err != nil {
 		context.IndentedJSON(
 			http.StatusInternalServerError,
@@ -41,5 +41,24 @@ func Register(context *gin.Context) {
 	context.IndentedJSON(
 		http.StatusCreated,
 		user,
+	)
+}
+
+func GetUserData(context *gin.Context) {
+
+	id := context.Param("id")
+
+	data, err := redis.GetUserData(id)
+	if err != nil {
+		context.IndentedJSON(
+			http.StatusInternalServerError,
+			err,
+		)
+	}
+
+	// Send back user information
+	context.IndentedJSON(
+		http.StatusOK,
+		data,
 	)
 }

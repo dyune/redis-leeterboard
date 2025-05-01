@@ -8,13 +8,14 @@ import (
 )
 
 var ctx = context.Background()
+
 var Rdb = redis.NewClient(&redis.Options{
 	Addr:     "localhost:6379",
 	Password: "skibidi",
 	DB:       0,
 })
 
-func getUserRank(id string) (int, error) {
+func GetUserRank(id string) (int, error) {
 	rank, err := Rdb.ZRevRank(ctx, "rank", id).Result()
 	if err != nil {
 		return -1, err
@@ -22,10 +23,7 @@ func getUserRank(id string) (int, error) {
 	return int(rank + 1), nil
 }
 
-func AddUser(
-	username string,
-	score int, // ← now we pass in the desired score
-) (User, error) {
+func AddUser(username string, score float64) (User, error) {
 
 	id := uuid.NewString()
 	newUser := User{
@@ -48,13 +46,13 @@ func AddUser(
 
 	// Add to the sorted set "rank"
 	if err := Rdb.ZAdd(ctx, "rank", redis.Z{
-		Score:  float64(newUser.Score),
+		Score:  newUser.Score,
 		Member: id,
 	}).Err(); err != nil {
 		return newUser, err
 	}
 
-	newUser.Rank, err = getUserRank(id)
+	newUser.Rank, err = GetUserRank(id)
 	if err != nil {
 		return User{}, err
 	}
@@ -62,7 +60,7 @@ func AddUser(
 	return newUser, nil
 }
 
-func getUserData(id string) (User, error) {
+func GetUserData(id string) (User, error) {
 	userData, err := Rdb.Get(ctx, id).Result()
 	var existingUser User
 
@@ -70,7 +68,7 @@ func getUserData(id string) (User, error) {
 		return User{}, err
 	}
 
-	existingUser.Rank, err = getUserRank(id)
+	existingUser.Rank, err = GetUserRank(id)
 	if err != nil {
 		return User{}, err
 	}

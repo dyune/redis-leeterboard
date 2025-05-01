@@ -5,8 +5,8 @@ type UserRequest struct {
 }
 
 type User struct {
-	Id    string `json:"id"`
-	Name  string `json:"name"`
-	Rank  int    `json:"rank"`
-	Score int    `json:"score"`
+	Id    string  `json:"id"`
+	Name  string  `json:"name"`
+	Rank  int     `json:"rank"`
+	Score float64 `json:"score"`
 }
