@@ -119,7 +119,7 @@ func GetLeaderboard(context *gin.Context) {
 	if err != nil {
 		context.IndentedJSON(
 			http.StatusInternalServerError,
-			err,
+			err.Error(),
 		)
 	} else {
 		context.IndentedJSON(

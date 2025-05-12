@@ -3,6 +3,7 @@ package redis
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
 )
@@ -57,6 +58,7 @@ func AddUser(username string, score float64) (User, error) {
 
 	newUser.Rank, err = GetUserRank(id)
 	if err != nil {
+		print("cock")
 		return User{}, err
 	}
 
@@ -99,6 +101,14 @@ func IncreaseUserScore(id string, scoreDelta float64) (float64, error) {
 		return -1, err
 	}
 
+	// Update the rank if need be, so fetch from the sorted set
+	var rank float64
+	rank, err = Rdb.ZScore(ctx, "rank", id).Result()
+	if err != nil {
+		return -1, err
+	}
+
+	user.Rank = int(rank)
 	user.Score = score
 	userData, err := json.Marshal(user)
 	if err != nil {
@@ -131,13 +141,15 @@ func GetLeaderboard() ([]User, error) {
 	//  0, first -> highest
 	// -1, last  -> low score
 	leaderboard := Rdb.ZRevRange(ctx, "rank", 0, -1).Val()
-
-	var users []User = make([]User, 0)
+	fmt.Printf("%s", leaderboard)
+	var users = make([]User, 0)
 
 	for _, str := range leaderboard {
 		var user User
 		err := json.Unmarshal([]byte(str), &user)
 		if err != nil {
+			// For debugging purposes, print the problematic JSON string
+			fmt.Printf("Error unmarshaling JSON: %v\nProblematic JSON string: %s\n", err, str)
 			return nil, err
 		}
 		users = append(users, user)
