@@ -93,9 +93,17 @@ func GetUserData(context *gin.Context) {
 func UpdateUserPoints(context *gin.Context) {
 
 	id := context.Param("id")
-	var points float64
+	var points redis.PointUpdateRequest
 
-	if score, err := redis.IncreaseUserScore(id, points); err != nil {
+	err := context.BindJSON(&points)
+	if err != nil {
+		context.IndentedJSON(
+			http.StatusBadRequest,
+			err,
+		)
+	}
+
+	if score, err := redis.IncreaseUserScore(id, points.Points); err != nil {
 		context.IndentedJSON(
 			http.StatusInternalServerError,
 			err,

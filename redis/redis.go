@@ -3,6 +3,7 @@ package redis
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
@@ -83,14 +84,20 @@ func GetUserData(id string) (User, error) {
 
 func IncreaseUserScore(id string, scoreDelta float64) (float64, error) {
 
-	// Increments the value of the member inside the "rank" sorted set
-	score, err := Rdb.ZIncrBy(ctx, "rank", scoreDelta, id).Result()
+	if scoreDelta < 0 {
+		return -1, errors.New("illegal score argument: under 0")
+	}
+
+	// First, get the user data to see if it exists.
+	// Get the user data from Redis, unmarshal it, update it, remarshal and update it
+	jsonUser, err := Rdb.Get(ctx, id).Result()
 	if err != nil {
 		return -1, err
 	}
 
-	// Get the user data from Redis, unmarshal it, update it, remarshal and update it
-	jsonUser, err := Rdb.Get(ctx, id).Result()
+	// Increments the value of the member inside the "rank" sorted set
+	score, err := Rdb.ZIncrBy(ctx, "rank", scoreDelta, id).Result()
+	print(score, scoreDelta)
 	if err != nil {
 		return -1, err
 	}
@@ -102,13 +109,13 @@ func IncreaseUserScore(id string, scoreDelta float64) (float64, error) {
 	}
 
 	// Update the rank if need be, so fetch from the sorted set
-	var rank float64
-	rank, err = Rdb.ZScore(ctx, "rank", id).Result()
+	var rank int64
+	rank, err = Rdb.ZRevRank(ctx, "rank", id).Result()
 	if err != nil {
 		return -1, err
 	}
 
-	user.Rank = int(rank)
+	user.Rank = int(rank + 1)
 	user.Score = score
 	userData, err := json.Marshal(user)
 	if err != nil {
@@ -146,12 +153,12 @@ func GetLeaderboard() ([]User, error) {
 
 	for _, str := range leaderboard {
 		var user User
-		err := json.Unmarshal([]byte(str), &user)
+		jsonUser, err := Rdb.Get(ctx, str).Result()
 		if err != nil {
-			// For debugging purposes, print the problematic JSON string
-			fmt.Printf("Error unmarshaling JSON: %v\nProblematic JSON string: %s\n", err, str)
+			fmt.Printf("Error: %s\n", err)
 			return nil, err
 		}
+		err = json.Unmarshal([]byte(jsonUser), &user)
 		users = append(users, user)
 	}
 

@@ -10,3 +10,7 @@ type User struct {
 	Rank  int     `json:"rank"`
 	Score float64 `json:"score"`
 }
+
+type PointUpdateRequest struct {
+	Points float64 `json:"points"`
+}
