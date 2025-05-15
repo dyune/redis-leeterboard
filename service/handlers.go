@@ -5,6 +5,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"redis-leetcode-leaderboard/redis"
+	"strconv"
 	"time"
 )
 
@@ -156,5 +157,33 @@ func DeleteUser(context *gin.Context) {
 				"Deleted-user-ID": id,
 			},
 		)
+	}
+}
+
+// GetSubset GET method
+func GetSubset(context *gin.Context) {
+	offset, err := strconv.Atoi(context.DefaultQuery("offset", "1"))
+	if err != nil {
+		context.IndentedJSON(
+			http.StatusBadRequest,
+			gin.H{"message": "`offset` must be a valid integer"})
+		return
+	}
+	limit, err := strconv.Atoi(context.DefaultQuery("limit", "10"))
+	if err != nil {
+		context.IndentedJSON(
+			http.StatusBadRequest,
+			gin.H{"message": "`limit` must be a valid integer"})
+		return
+	}
+	result, err := redis.GetLeaderboardSubset(offset, limit)
+	if err != nil {
+		context.IndentedJSON(
+			http.StatusInternalServerError,
+			gin.H{"Failed to process due to error": err.Error()})
+	} else {
+		context.IndentedJSON(
+			http.StatusOK,
+			result)
 	}
 }

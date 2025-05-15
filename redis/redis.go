@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
+	"log"
 )
 
 var ctx = context.Background()
@@ -159,9 +160,61 @@ func GetLeaderboard() ([]User, error) {
 			return nil, err
 		}
 		err = json.Unmarshal([]byte(jsonUser), &user)
-		users = append(users, user)
+
+		if user.Rank > 0 {
+			users = append(users, user)
+		}
 	}
 
 	return users, nil
 
+}
+
+func GetLeaderboardSubset(offset, limit int) ([]User, error) {
+	cmd := Rdb.ZRangeArgsWithScores(ctx, redis.ZRangeArgs{
+		Key:     "rank",
+		Start:   offset - 1,
+		Stop:    offset + limit - 2,
+		ByScore: false,
+		ByLex:   false,
+		Rev:     true,
+	})
+	log.Printf("Command: %v", cmd)
+	users, err := cmd.Result()
+
+	if err != nil {
+		log.Printf("Error encountered: %v", err)
+		return nil, err
+	}
+
+	var result []User
+	for rank, userScore := range users {
+
+		id := userScore.Member.(string)
+
+		userData, err := Rdb.Get(ctx, id).Result()
+		if err != nil {
+			log.Printf("Error while getting user with id %s: %v", id, err)
+			return nil, err
+		}
+
+		var constructedUser User
+		err = json.Unmarshal([]byte(userData), &constructedUser)
+		if err != nil {
+			log.Printf("Error while unmarshaling user data: tried to unmarshal: \n%s \nError: %v",
+				userData,
+				err,
+			)
+			return nil, err
+		}
+
+		result = append(result,
+			User{
+				Id:    id,
+				Name:  constructedUser.Name,
+				Score: userScore.Score,
+				Rank:  rank + offset,
+			})
+	}
+	return result, nil
 }
